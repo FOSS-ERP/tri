@@ -249,5 +249,5 @@ app_license = "mit"
 app_name = "tri"
 
 app_include_js = [
-    "/assets/tri/js/fiscal_year_widget.js",
+	"/assets/tri/js/fiscal_year_widget.js",
 ]
