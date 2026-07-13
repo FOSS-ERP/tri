@@ -246,7 +246,8 @@ app_license = "mit"
 # ------------
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
+app_name = "tri"
 
 app_include_js = [
-    "/assets/tri/js/fiscal_year_widget.js"
+    "/assets/tri/js/fiscal_year_widget.js",
 ]

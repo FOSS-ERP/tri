@@ -1,13 +1,46 @@
+frappe.provide("tri.fiscal_year_widget");
+
+tri.fiscal_year_widget._inflight = false;
+
 $(document).ready(function () {
-    setTimeout(addFiscalYearDropdown, 1000);
+    tri.fiscal_year_widget.startWatching();
 });
 
-function addFiscalYearDropdown() {
-    if ($('#global-fiscal-year-dropdown').length) return;
+tri.fiscal_year_widget.startWatching = function () {
+    let observer = new MutationObserver(function () {
+        tri.fiscal_year_widget.tryAdd(observer);
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    tri.fiscal_year_widget.tryAdd(observer);
+
+    frappe.router.on("change", function () {
+        tri.fiscal_year_widget.tryAdd(observer);
+    });
+};
+
+tri.fiscal_year_widget.tryAdd = function (observer) {
+    if ($('#global-fiscal-year-dropdown').length) {
+        if (observer) observer.disconnect();
+        return;
+    }
+    if (tri.fiscal_year_widget._inflight) return;
+
+    let $container = $('.navbar > .flex').first();
+    if (!$container.length) return; 
+
+    tri.fiscal_year_widget._inflight = true;
+    addFiscalYearDropdown(function () {
+        tri.fiscal_year_widget._inflight = false;
+    });
+};
+
+function addFiscalYearDropdown(done) {
+    if ($('#global-fiscal-year-dropdown').length) { if (done) done(); return; }
 
     let $container = $('.navbar > .flex').first();
     if (!$container.length) {
-        setTimeout(addFiscalYearDropdown, 1000);
+        setTimeout(function () { addFiscalYearDropdown(done); }, 1000);
         return;
     }
 
@@ -20,6 +53,7 @@ function addFiscalYearDropdown() {
             limit_page_length: 0
         },
         callback: function (r) {
+            if (done) done();
             if (!r.message) return;
 
             let options = r.message.map(fy => `<option value="${fy.name}">${fy.name}</option>`).join('');
@@ -50,7 +84,6 @@ function addFiscalYearDropdown() {
             console.log("Fiscal Year widget initialized. Current:", current);
             localStorage.setItem('selected_fiscal_year', current);
 
-            // Test the API call directly on init to confirm it works
             frappe.call({
                 method: 'frappe.client.set_value',
                 args: {
@@ -105,6 +138,10 @@ function addFiscalYearDropdown() {
                     }
                 });
             });
+        },
+        error: function (err) {
+            if (done) done();
+            console.error("ERROR fetching fiscal year list on init:", err);
         }
     });
 }
